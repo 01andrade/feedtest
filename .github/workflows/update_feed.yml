@@ -16,7 +16,7 @@ jobs:
       - name: Instalar dependências
         run: pip install requests beautifulsoup4 feedgenerator
       - name: Executar script
-        run: python gerar_rss.py
+        run: python rsstest.py
       - name: Fazer commit do feed atualizado
         run: |
           git config --global user.name "Seu Nome"
