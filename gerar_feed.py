@@ -35,7 +35,7 @@ def extrair_imagem_e_texto_voloch(link):
         imagem = tree.xpath('//div[@class="gallery__container"]//img/@src')
         imagem_url = f"https://www.otempo.com.br{imagem[0]}" if imagem else ""
         paragrafos = tree.xpath('//section[@id="bodyArticle"]//p/text()')
-        texto = " ".join(p.strip() for p in paragrafos if p.strip())
+        texto = "\n\n".join(p.strip() for p in paragrafos if p.strip())
         return imagem_url, texto
     except Exception as e:
         print(f"❌ Erro ao extrair imagem/texto de {link}: {e}")
