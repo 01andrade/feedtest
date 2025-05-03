@@ -11,7 +11,7 @@ def extrair_data_voloch(link):
         tree = html.fromstring(r.content)
         data_txt = tree.xpath('//span[@class="cmp__author-publication"]/span/text()')
         if data_txt:
-            data_txt = data_txt[0].strip()  # Ex: "02 de maio de 2025 | 10:07"
+            data_txt = data_txt[0].strip()
             dia, mes_ext, ano_hora = data_txt.split(" de ")
             ano, hora = ano_hora.split(" | ")
             meses = {
@@ -25,6 +25,21 @@ def extrair_data_voloch(link):
     except Exception as e:
         print(f"❌ Erro ao extrair data de {link}: {e}")
     return datetime.min
+
+# ========== AUXILIAR: EXTRAI IMAGEM E TEXTO DA MATÉRIA ==========
+def extrair_imagem_e_texto_voloch(link):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    try:
+        r = requests.get(link, headers=headers, timeout=10)
+        tree = html.fromstring(r.content)
+        imagem = tree.xpath('//div[@class="gallery__container"]//img/@src')
+        imagem_url = f"https://www.otempo.com.br{imagem[0]}" if imagem else ""
+        paragrafos = tree.xpath('//section[@id="bodyArticle"]//p/text()')
+        texto = " ".join(p.strip() for p in paragrafos if p.strip())
+        return imagem_url, texto
+    except Exception as e:
+        print(f"❌ Erro ao extrair imagem/texto de {link}: {e}")
+    return "", ""
 
 # ========== FEED DO VOLOCH ==========
 def gerar_feed_voloch():
@@ -48,7 +63,9 @@ def gerar_feed_voloch():
         subtitulo = subtitulo[0].strip() if subtitulo else ""
 
         data_pub = extrair_data_voloch(full_link)
-        entradas.append((data_pub, titulo, subtitulo, full_link))
+        imagem, texto = extrair_imagem_e_texto_voloch(full_link)
+
+        entradas.append((data_pub, titulo, subtitulo, full_link, imagem, texto))
 
     entradas.sort(reverse=True)
 
@@ -59,12 +76,14 @@ def gerar_feed_voloch():
     ET.SubElement(channel, "description").text = "Últimas postagens do Blog do Voloch"
     ET.SubElement(channel, "language").text = "pt-br"
 
-    for data_pub, titulo, subtitulo, full_link in entradas:
+    for data_pub, titulo, subtitulo, full_link, imagem, texto in entradas:
         item = ET.SubElement(channel, "item")
         ET.SubElement(item, "title").text = titulo
         ET.SubElement(item, "link").text = full_link
-        ET.SubElement(item, "description").text = subtitulo
+        ET.SubElement(item, "description").text = f"{subtitulo}\n\n{texto}"
         ET.SubElement(item, "pubDate").text = data_pub.strftime('%a, %d %b %Y %H:%M:%S GMT')
+        if imagem:
+            ET.SubElement(item, "enclosure", url=imagem, type="image/webp")
 
     tree = ET.ElementTree(rss)
     tree.write("feed_voloch.xml", encoding="utf-8", xml_declaration=True)
