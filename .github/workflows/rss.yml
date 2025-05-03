@@ -1,9 +1,9 @@
-name: Atualizar Feed RSS do Voloch
+name: Atualizar Feeds RSS
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Executa a cada 6 horas
-  workflow_dispatch:        # Permite rodar manualmente pelo GitHub
+    - cron: '0 */6 * * *'  # A cada 6 horas
+  workflow_dispatch:        # Permite execução manual pelo GitHub
 
 jobs:
   build:
@@ -22,13 +22,13 @@ jobs:
         run: |
           pip install requests lxml
 
-      - name: Executar script de geração do feed
+      - name: Executar script para gerar feeds
         run: python gerar_feed.py
 
-      - name: Commit e push do feed RSS
+      - name: Commit e push dos feeds atualizados
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add feed_voloch.xml
-          git commit -m "Atualização automática do feed RSS" || echo "Sem alterações"
+          git add feed_voloch.xml feed_netvasco.xml
+          git commit -m "Atualização automática dos feeds RSS" || echo "Sem alterações"
           git push
