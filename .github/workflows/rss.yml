@@ -1,0 +1,34 @@
+name: Atualizar Feed RSS do Voloch
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Executa a cada 6 horas
+  workflow_dispatch:        # Permite rodar manualmente pelo GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependências
+        run: |
+          pip install requests lxml
+
+      - name: Executar script de geração do feed
+        run: python gerar_feed.py
+
+      - name: Commit e push do feed RSS
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add feed_voloch.xml
+          git commit -m "Atualização automática do feed RSS" || echo "Sem alterações"
+          git push
