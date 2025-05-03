@@ -25,13 +25,13 @@ jobs:
       - name: Executar script para gerar feeds
         run: python gerar_feed.py
 
-      - name: Commit e push dos feeds RSS
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Commit e Push dos Feeds
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
-          git add *.xml || true
-          git commit -m "Atualização automática dos feeds RSS" || echo "Sem alterações"
-          git push origin main
+         git config user.name "github-actions"
+         git config user.email "github-actions@github.com"
+         git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/01andrade/feedtest
+         git add *.xml *.html || true
+         git commit -m "Atualização automática dos feeds RSS" || echo "Sem alterações"
+         git push origin main
+        env:
+         GH_TOKEN: ${{ secrets.GH_TOKEN }}
