@@ -75,62 +75,35 @@ def gerar_feed_voloch():
 def gerar_feed_netvasco():
     URL = "https://netvasco.com.br"
     DOMINIO = "https://netvasco.com.br"
-    headers = { "User-Agent": "Mozilla/5.0" }
+    headers = {"User-Agent": "Mozilla/5.0"}
 
     response = requests.get(URL, headers=headers)
     tree = html.fromstring(response.content)
 
-    blocos = tree.xpath('//ul[starts-with(@id, "posts")]/li')
-
-    noticias = []
-    for bloco in blocos:
-        link_el = bloco.xpath(".//a")[0]
-        texto = link_el.xpath("string()").strip()
-        link = link_el.get("href")
-        full_link = DOMINIO + link if link else "#"
-
-        data = bloco.xpath('.//span[contains(@class, "data")]/text()')
-        hora = bloco.xpath('.//span[contains(@class, "noticia-hora")]/text()')
-
-        data_str = data[0].strip() if data else "01 de janeiro"
-        hora_str = hora[0].strip() if hora else "00:00"
-
-        # Converte "Sábado, 03 de maio" para "03/05" e junta com hora
-        try:
-            dia_mes = data_str.split(",")[-1].strip()
-            dt_completa = datetime.strptime(dia_mes + " " + hora_str, "%d de %B %H:%M")
-            dt_completa = dt_completa.replace(year=datetime.now().year)
-        except Exception:
-            dt_completa = datetime.now()
-
-        noticias.append({
-            "title": texto,
-            "link": full_link,
-            "description": texto,
-            "pubDate": dt_completa.strftime('%a, %d %b %Y %H:%M:%S GMT'),
-            "datetime": dt_completa
-        })
-
-    # Ordena da mais recente para a mais antiga
-    noticias.sort(key=lambda x: x["datetime"], reverse=True)
+    itens = tree.xpath('//ul[starts-with(@id, "posts")]/li/a')
 
     rss = ET.Element("rss", version="2.0")
     channel = ET.SubElement(rss, "channel")
+
     ET.SubElement(channel, "title").text = "Netvasco - Últimas Notícias"
     ET.SubElement(channel, "link").text = URL
     ET.SubElement(channel, "description").text = "Feed gerado a partir da página inicial do Netvasco"
     ET.SubElement(channel, "language").text = "pt-br"
 
-    for item in noticias[:15]:
+    for item in itens[:15]:
+        link = item.get("href")
+        texto = item.xpath("string()").strip()
+        full_link = DOMINIO + link if link else "#"
+
         entry = ET.SubElement(channel, "item")
-        ET.SubElement(entry, "title").text = item["title"]
-        ET.SubElement(entry, "link").text = item["link"]
-        ET.SubElement(entry, "description").text = item["description"]
-        ET.SubElement(entry, "pubDate").text = item["pubDate"]
+        ET.SubElement(entry, "title").text = texto
+        ET.SubElement(entry, "link").text = full_link
+        ET.SubElement(entry, "description").text = texto
+        ET.SubElement(entry, "pubDate").text = datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     tree = ET.ElementTree(rss)
     tree.write("feed_netvasco.xml", encoding="utf-8", xml_declaration=True)
-    print("✅ Feed do Netvasco gerado!")
+    print("✅ Feed do Netvasco gerado")
 
 # ========== EXECUTA OS DOIS FEEDS ==========
 gerar_feed_voloch()
